@@ -11,7 +11,44 @@ var renderer = new THREE.WebGLRenderer({alpha : true, preserveDrawingBuffer: tru
 var controls = new THREE.OrbitControls( camera, renderer.domElement);
 
 
-//Load center cube
+//INIT all scene objects
+var Init = function() {
+    
+    //Init of Renderer and Canvas
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+    renderer.setClearColor(0xf7e6f6, 0);
+
+    //Camera Controls
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.25;
+    controls.enableZoom = true;
+
+    //Ground Helper
+    var grid = new THREE.GridHelper(10, 0.5, 0xd3d3d3, 0xd3d3d3);
+    grid.position.y = 0;
+    scene.add(grid);
+    
+    camera.position.z = 15;
+    camera.position.y = 2;
+    
+    var windowResize = new THREEx.WindowResize(renderer, camera);
+    
+}
+
+//Lighting
+var InitLights = function() {
+    
+    var dirlight = new THREE.DirectionalLight(0xfffff, 1);
+    var ambLight = new THREE.AmbientLight(0xfffff, 0.25);
+    dirlight.position.z = 7;
+    dirlight.position.x = 5;
+    scene.add(dirlight, ambLight);
+    
+}
+
+
+//Load centerCube
 var centerCube = new THREE.Object3D();
 var material = new THREE.MeshPhongMaterial({color:0x82dd34});
 
@@ -53,6 +90,35 @@ var InitCenterCube = function() {
 var mouse = new THREE.Vector2(), INTERSECTED;
 raycaster = new THREE.Raycaster();
 
+//Find intersected objects
+var cubeInterSect = false;
+var WindowRayCast = function() {
+    
+    raycaster.setFromCamera( mouse, camera );
+    
+    var intersects = raycaster.intersectObjects( scene.children, true );
+    
+    if(intersects.length > 0){//If something is Intersected 
+        
+        if( INTERSECTED != intersects[0].object ){ // If intersected does not equal the previous intersected object 
+            
+            if(intersects[0].object.name == 'centerCube'){ //Look for CenterCube
+                
+                cubeInterSect = true;
+                
+            }
+        }
+        
+    } else {
+        
+        cubeInterSect = false;
+        
+        INTERSECTED = null;
+        
+    }
+    
+}
+
 var onMouseMove = function( e ) {
     
     e.preventDefault();
@@ -62,86 +128,53 @@ var onMouseMove = function( e ) {
     
 }
 
-//Find intersected objects
-var cubeInterSect = false;
-var WindowRayCast = function() {
+var onMouseDown = function( e ) {
+    
+    e.preventDefault();
+    
+    mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
+    mouse.y = - (e.clientY / window.innerHeight) * 2 + 1;
     
     raycaster.setFromCamera( mouse, camera );
-    
     var intersects = raycaster.intersectObjects( scene.children, true );
     
     if(intersects.length > 0){
-        
-        if( INTERSECTED != intersects[0].object ){
-            if( INTERSECTED ) INTERSECTED.material.color.setHex(INTERSECTED.currentHex);
-            
-            INTERSECTED = intersects[0].object;
-            INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
-            INTERSECTED.material.color.setHex( 0xff0000 );
-            
-            console.log(intersects[0].object.name);
-            
+        if(intersects[0].object.name == 'centerCube'){
+            console.log('Center Cube Clicked');    
+        } else{
+            console.log('objectClicked');    
         }
-        
-    } else {
-        
-        if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
-        
-        cubeInterSect = false;
-        INTERSECTED = null;
-        
     }
     
 }
 
+
 document.addEventListener('mousemove', onMouseMove, false);
+document.addEventListener('mousedown', onMouseDown, false);
 
 // -- -- -- END -- -- -- \\
 
 
-
-//INIT all scene objects
-var Init = function() {
+//Update scene 
+var Update = function() {
     
-    //Init of Renderer and Canvas
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
-    renderer.setClearColor(0xf7e6f6, 0);
-
-    //Camera Controls
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.25;
-    controls.enableZoom = true;
-
-    //Ground Helper
-    var grid = new THREE.GridHelper(10, 0.5, 0xd3d3d3, 0xd3d3d3);
-    grid.position.y = 0;
-//    scene.add(grid);
-    
-    camera.position.z = 15;
-    camera.position.y = 2;
-    
-    var windowResize = new THREEx.WindowResize(renderer, camera);
+    if(cubeInterSect){
+        TweenMax.to(centerCube.scale, .25, {x:2, y:2, z:2});
+    } else {
+        TweenMax.to(centerCube.scale, .25, {x:1, y:1, z:1});
+    }
     
 }
 
-//Lighting
-var InitLights = function() {
-    
-    var dirlight = new THREE.DirectionalLight(0xfffff, 1);
-    var ambLight = new THREE.AmbientLight(0xfffff, 0.25);
-    dirlight.position.z = 7;
-    dirlight.position.x = 5;
-    scene.add(dirlight, ambLight);
-    
-}
 
+//
+/*
 var cube = new THREE.BoxGeometry(1,1,1);
 var mat = new THREE.MeshLambertMaterial({color:0x82dd34});
 var cubeMesh = new THREE.Mesh(cube, mat);
 
 scene.add(cubeMesh);
-
+*/
 
 //Main Render Function 
 var render = function() {
@@ -149,6 +182,7 @@ var render = function() {
     
     WindowRayCast();
     controls.update();
+    Update();
     renderer.render(scene, camera);
 }
 
