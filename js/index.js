@@ -25,11 +25,13 @@ loader.load( "obj/centerCube.obj", function( object ) {
             child.material = material;
         }
     });
+    object.children[0].name = 'centerCube';
+    console.log(object.children[0].name);
+    
     centerCube.add(object);
 });
-
-centerCube.name = "centerCube";
 scene.add(centerCube);
+
 
 //init centerCube
 var InitCenterCube = function() {
@@ -60,6 +62,8 @@ var onMouseMove = function( e ) {
     
 }
 
+//Find intersected objects
+var cubeInterSect = false;
 var WindowRayCast = function() {
     
     raycaster.setFromCamera( mouse, camera );
@@ -74,6 +78,7 @@ var WindowRayCast = function() {
             INTERSECTED = intersects[0].object;
             INTERSECTED.currentHex = INTERSECTED.material.color.getHex();
             INTERSECTED.material.color.setHex( 0xff0000 );
+            
             console.log(intersects[0].object.name);
             
         }
@@ -82,6 +87,7 @@ var WindowRayCast = function() {
         
         if ( INTERSECTED ) INTERSECTED.material.color.setHex( INTERSECTED.currentHex );
         
+        cubeInterSect = false;
         INTERSECTED = null;
         
     }
@@ -141,7 +147,7 @@ scene.add(cubeMesh);
 var render = function() {
     window.requestAnimationFrame( render );
     
-//    WindowRayCast();
+    WindowRayCast();
     controls.update();
     renderer.render(scene, camera);
 }
